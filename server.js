@@ -3,37 +3,31 @@ const inquirer = require("inquirer");
 const mysql = require("mysql2");
 const PORT = process.env.PORT || 3001;
 const app = express();
+const logo = require('asciiart-logo');
+const config = require('./package.json');
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-// // Connect to database
-// const db = mysql.createConnection(
-//   {
-//     host: 'localhost',
-//     user: 'root',
-//     password: 'sqlpass',
-//     database: 'employee_db'
-//   },
-//   console.log(`Connected to the employee_db database.`)
-// );
 
-// // Query database
-// db.query('SELECT * FROM course_names', function (err, results) {
-//   console.log(results);
-// });
+const db = mysql.createConnection(
+  {
+    host: 'localhost',
+    user: 'root',
+    password: 'sqlpass',
+    database: 'employee_db'
+  },
+  console.log(`Connected to the employee_db database.`)
+);
 
-// // Default response for any other request (Not Found)
-// app.use((req, res) => {
-//   res.status(404).end();
-// });
-
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
+db.connect(function(err){
+  if(err) throw err 
+})
 
 function runApp() {
-  console.log("FIGURE OUT HOW TO GET ASCII TO WORK");
+  // const logoText = logo({ name: "Employee Manager" }.render());
+
+  // console.log(logoText);
   mainMenu();
 }
 
@@ -77,10 +71,33 @@ function mainMenu() {
       } else if (data.mainmenu === "add an employee") {
         addEmployee();
       } else if (data.mainmenu === "update an employee role") {
-        updateEmployee();
+        updateEmployeeRole();
       }
     });
 }
+
+function viewDepartments() {
+  db.query ('Select * from department',(err, res) => {
+    if(err) throw err
+console.table(res)
+mainMenu()
+  })
+}
+function viewRoles() {
+  db.query ('Select * from role',(err, res) => {
+    if(err) throw err
+console.table(res)
+mainMenu()
+  })
+}
+function viewEmployees() {
+  db.query ('Select * from employee',(err, res) => {
+    if(err) throw err
+console.table(res)
+mainMenu()
+  })
+}
+
 
 function addDepartment() {
   inquirer
@@ -90,18 +107,17 @@ function addDepartment() {
         message: "What is the name of the department that you want to add?",
         name: "departmentname",
       },
-      {
-        type: "input",
-        message: "What is the ID of the department that you want to add?",
-        name: "departmentid",
-      },
     ])
     .then((data) => {
+      db.query('insert into department set ?', {
+        name: data.departmentname
+      })
       mainMenu();
     });
 }
 
 function addRole() {
+  db.query('select * from department', (err, res) => {
   inquirer
     .prompt([
       {
@@ -115,22 +131,26 @@ function addRole() {
         name: "rolesalary",
       },
       {
-        type: "input",
-        message: "What is the ID of the role that you want to add?",
-        name: "roleid",
-      },
-      {
-        type: "input",
+        type: "list",
         message: "What is the department ID of the role that you want to add?",
         name: "roledepartment",
+        choices: res.map(department => department.name)
       },
     ])
     .then((data) => {
+      let department = res.find(department => department.name === data.roledepartment)
+      db.query('insert into role set ?', {
+        title: data.roletitle,
+        salary: data.rolesalary,
+        department_id: department.id
+      } )
       mainMenu();
     });
+  })
 }
 
 function addEmployee() {
+  db.query('select * from role', (err, res) => {
   inquirer
     .prompt([
       {
@@ -144,22 +164,51 @@ function addEmployee() {
         name: "employeelast",
       },
       {
-        type: "input",
+        type: "list",
         message: "What is the role ID of the employee that you want to add?",
         name: "employeerole",
+        choices: res.map(role => role.title)
       },
       {
-        type: "input",
+        type: "list",
         message: "What is the manager ID of the employee you want to add?",
         name: "employeemanager",
+        choices: [1, 2, 3]
       },
     ])
     .then((data) => {
+      let role = res.find(role => role.title === data.employeerole)
+      db.query('insert into employee set ?', {
+        first_name: data.employeefirst,
+        last_name: data.employeelast,
+        role_id: role.id,
+        manager_id: data.employeemanager,
+      } )
       mainMenu();
     });
+  })
 }
 
-function updateEmployee() {}
+function updateEmployeeRole() {
+dbquery('select * from employee', (err, res) =>{
+  inquirer
+  .prompt([
+    {
+      type: "list",
+      message: "What is the first name of the employee that you want to add?",
+      name: "employeefirst",
+      choices: res.map(role => role.title)
+    },
+  ])
+  .then((data) => {
+    // bring answer from first question into the scope of this .then (let employee = data.employeefirst)
+    // query the role table and select the role to give to the employee similar to 189
+    .then((data) => {
+      // db.query(update the employee table with the selected employee and the selected role for that employee)
+    })
+  })
+})
+}
 
 runApp();
 
