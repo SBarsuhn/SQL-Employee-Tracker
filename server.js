@@ -1,10 +1,8 @@
 const express = require("express");
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
-const PORT = process.env.PORT || 3001;
 const app = express();
 const logo = require('asciiart-logo');
-const config = require('./package.json');
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -25,9 +23,17 @@ db.connect(function(err){
 })
 
 function runApp() {
-  // const logoText = logo({ name: "Employee Manager" }.render());
-
-  // console.log(logoText);
+  console.log(
+    logo({
+        name: 'EMPLOYEE MANAGER',
+        font: 'Delta Corps Priest 1',
+        lineChars: 10,
+        padding: 2,
+        margin: 2,
+        borderColor: 'bold-orange',
+        logoColor: 'bold-orange',
+    })
+    .render())
   mainMenu();
 }
 
@@ -165,7 +171,7 @@ function addEmployee() {
       },
       {
         type: "list",
-        message: "What is the role ID of the employee that you want to add?",
+        message: "What is the role of the employee that you want to add?",
         name: "employeerole",
         choices: res.map(role => role.title)
       },
@@ -173,7 +179,17 @@ function addEmployee() {
         type: "list",
         message: "What is the manager ID of the employee you want to add?",
         name: "employeemanager",
-        choices: [1, 2, 3]
+        choices: 
+        [1,
+        new inquirer.Separator(),
+        2,
+        new inquirer.Separator(),
+        3,
+        new inquirer.Separator(),
+        4,
+        new inquirer.Separator(),
+        5,
+        new inquirer.Separator(),]
       },
     ])
     .then((data) => {
@@ -190,40 +206,41 @@ function addEmployee() {
 }
 
 function updateEmployeeRole() {
-dbquery('select * from employee', (err, res) =>{
+db.query('select * from employee', (err, res) =>{
   inquirer
   .prompt([
     {
       type: "list",
-      message: "What is the first name of the employee that you want to add?",
-      name: "employeefirst",
-      choices: res.map(role => role.title)
+      message: "What is the first name of the employee that you want to update?",
+      name: "updateemployee",
+      choices: res.map(employee => employee.first_name)
     },
   ])
   .then((data) => {
-    // bring answer from first question into the scope of this .then (let employee = data.employeefirst)
-    // query the role table and select the role to give to the employee similar to 189
-    .then((data) => {
-      // db.query(update the employee table with the selected employee and the selected role for that employee)
-    })
+    let employee = data.updateemployee
+    db.query('select * from role', (err, res) => {
+      inquirer
+    .prompt([
+      {
+        type: "list",
+        message: "What is the new role of the employee?",
+        name: "newrole",
+        choices: res.map(role => role.title)
+      },
+    ])
+  })
+  // query the role table and select the role to give to the employee similar to 189
+  // .then((data) => {
+    //   // db.query(update the employee table with the selected employee and the selected role for that employee)
+    // })
   })
 })
 }
 
 runApp();
 
-// GIVEN a command-line application that accepts user input
-// WHEN I choose to view all departments
-// THEN I am presented with a formatted table showing department names and department ids
-// WHEN I choose to view all roles
-// THEN I am presented with the job title, role id, the department that role belongs to, and the salary for that role
-// WHEN I choose to view all employees
-// THEN I am presented with a formatted table showing employee data, including employee ids, first names, last names, job titles, departments, salaries, and managers that the employees report to
-// WHEN I choose to add a department
-// THEN I am prompted to enter the name of the department and that department is added to the database
-// WHEN I choose to add a role
-// THEN I am prompted to enter the name, salary, and department for the role and that role is added to the database
-// WHEN I choose to add an employee
-// THEN I am prompted to enter the employee’s first name, last name, role, and manager, and that employee is added to the database
+
+
+
 // WHEN I choose to update an employee role
 // THEN I am prompted to select an employee to update and their new role and this information is updated in the database
