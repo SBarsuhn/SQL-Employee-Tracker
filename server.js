@@ -206,41 +206,46 @@ function addEmployee() {
 }
 
 function updateEmployeeRole() {
-db.query('select * from employee', (err, res) =>{
-  inquirer
-  .prompt([
-    {
-      type: "list",
-      message: "What is the first name of the employee that you want to update?",
-      name: "updateemployee",
-      choices: res.map(employee => employee.first_name)
-    },
-  ])
-  .then((data) => {
-    let employee = data.updateemployee
-    db.query('select * from role', (err, res) => {
-      inquirer
-    .prompt([
-      {
-        type: "list",
-        message: "What is the new role of the employee?",
-        name: "newrole",
-        choices: res.map(role => role.title)
-      },
-    ])
-  })
-  // query the role table and select the role to give to the employee similar to 189
-  // .then((data) => {
-    //   // db.query(update the employee table with the selected employee and the selected role for that employee)
-    // })
-  })
-})
+  db.query("select * from employee", (err, res) => {
+    if (err) throw err;
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          message:
+            "What is the first name of the employee that you want to update?",
+          name: "updateemployee",
+          choices: res.map((employee) => employee.first_name),
+        },
+      ])
+      .then((data) => {
+        let selectedEmp = res.find(employee => employee.first_name === data.updateemployee);
+        console.log(selectedEmp.id)
+        db.query("select * from role", (err, res) => {
+          inquirer
+            .prompt([
+              {
+                type: "rawlist",
+                message: "What is the new role of the employee?",
+                name: "newrole",
+                choices: res.map((role) => role.title),
+              },
+            ])
+            .then((data) => {
+              let selectedRole = res.find(role => role.title === data.newrole);
+              db.query(
+                "UPDATE employee SET role_id = ? WHERE id = ?",
+                [selectedRole.id, selectedEmp.id],
+                function (error) {
+                  if (err) throw err;
+                  mainMenu()
+                  
+                }
+              );
+            });
+        });
+      });
+  });
 }
 
 runApp();
-
-
-
-
-// WHEN I choose to update an employee role
-// THEN I am prompted to select an employee to update and their new role and this information is updated in the database
