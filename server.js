@@ -1,3 +1,4 @@
+// These are the requirements that let the application function
 const express = require("express");
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
@@ -6,7 +7,7 @@ const logo = require("asciiart-logo");
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-
+// This section and the db.connect let the javascript file read information from the employee database on schema.sql
 const db = mysql.createConnection(
   {
     host: "localhost",
@@ -20,7 +21,7 @@ const db = mysql.createConnection(
 db.connect(function (err) {
   if (err) throw err;
 });
-
+// This function just throws up a start screen to let you know the application is running correctly
 function runApp() {
   console.log(
     logo({
@@ -35,7 +36,7 @@ function runApp() {
   );
   mainMenu();
 }
-
+// This puts up a goodbye message and then ends the connection with the database
 function exit() {
   console.log(
     logo({
@@ -50,7 +51,7 @@ function exit() {
   );
   db.end();
 }
-
+// This is the function for the main menu. It lets you pick what you want to do inside the application
 function mainMenu() {
   inquirer
     .prompt([
@@ -99,7 +100,7 @@ function mainMenu() {
       }
     });
 }
-
+// This just shows the departments table from the database
 function viewDepartments() {
   db.query("Select * from department", (err, res) => {
     if (err) throw err;
@@ -107,6 +108,7 @@ function viewDepartments() {
     mainMenu();
   });
 }
+// This just shows the roles table from the database
 function viewRoles() {
   db.query("Select * from role", (err, res) => {
     if (err) throw err;
@@ -115,7 +117,7 @@ function viewRoles() {
   });
 }
 
-
+// This one is a little more in depth. It joins together aspects of multiple tables so you can see, for example, an employees name, department, and salary at the same time.
 function viewEmployees() {
 
   db.query("select emp.id, emp.manager_id, emp.first_name, emp.last_name, rl.title, dep.name as department, rl.salary from employee emp left join role rl on emp.role_id = rl.id left join department dep on dep.id = rl.department_id left join employee man on man.id = emp.manager_id", (err, res) => {
@@ -126,7 +128,7 @@ function viewEmployees() {
 
 }
 
-
+// This lets you put a new row in the department table
 function addDepartment() {
   inquirer
     .prompt([
@@ -143,9 +145,10 @@ function addDepartment() {
       mainMenu();
     });
 }
-
+// This will prompt you with a few questions and then add the responses to the role table in the database
 function addRole() {
   db.query("select * from department", (err, res) => {
+    if (err) throw err;
     inquirer
       .prompt([
         {
@@ -170,6 +173,7 @@ function addRole() {
         let department = res.find(
           (department) => department.name === data.roledepartment
         );
+        // This section adds the responses from the prompt into the database
         db.query("insert into role set ?", {
           title: data.roletitle,
           salary: data.rolesalary,
@@ -179,9 +183,10 @@ function addRole() {
       });
   });
 }
-
+// This will prompt you with a few questions and then add the responses to the employee table in the database
 function addEmployee() {
   db.query("select * from role", (err, res) => {
+    if (err) throw err;
     inquirer
       .prompt([
         {
@@ -220,6 +225,7 @@ function addEmployee() {
           ],
         },
       ])
+      // This section adds the responses from the prompt into the database
       .then((data) => {
         let role = res.find((role) => role.title === data.employeerole);
         db.query("insert into employee set ?", {
@@ -232,7 +238,7 @@ function addEmployee() {
       });
   });
 }
-
+// This lets you update the role of an employee. It works by first asking the name of the employee you want to update. Then it finds that name in the database and updates it to be in the new role
 function updateEmployeeRole() {
   db.query("select * from employee", (err, res) => {
     if (err) throw err;
@@ -268,7 +274,7 @@ function updateEmployeeRole() {
               db.query(
                 "UPDATE employee SET role_id = ? WHERE id = ?",
                 [selectedRole.id, selectedEmp.id],
-                function (error) {
+                function (err) {
                   if (err) throw err;
                   mainMenu();
                 }
@@ -278,5 +284,5 @@ function updateEmployeeRole() {
       });
   });
 }
-
+// This is what starts the application when you run "node server.js"
 runApp();
